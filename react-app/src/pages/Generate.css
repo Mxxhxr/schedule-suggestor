@@ -4,67 +4,117 @@
     font-weight: 600;
 }
 
-/* time div */
 .time-column {
-    width: 4.2vw;
-    /* padding-right: .52vw; */
-    padding-right: 4.9vw;
-    box-sizing: border-box;
+    width: 0;
 }
 
-.time-line {
-    position: relative;
-}
-
-/* times  */
-.time-label {
-    position: relative;
-    text-align: right;
-    top: -.3vh;
-    width: 4.4vw;
-    /* changed width*/
-    margin-top: 3.67vh;
-    font-size: .75rem;
-}
-
-/* Style for the schedule grid */
 .schedule-grid {
     flex: 1;
     overflow: auto;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
     position: relative;
-    border-spacing: 0 .52vw;
 }
 
-/* days */
-th,
-td {
-    margin: 0vw -.26vw;
-    width: 5.2vw;
-    border: .1vw solid #ccc;
-    padding: 1.273vh;
+.grid-header-row {
+    display: flex;
+}
+
+.grid-corner {
+    flex: 0 0 70px;
+}
+
+.grid-day-header {
+    flex: 1;
+    min-width: 100px;
     text-align: center;
     font-size: .75rem;
+    padding: 10px 0;
+    border-bottom: 1px solid #ccc;
 }
 
-tr:first-child th {
-    padding-top: .57vh;
-    padding-bottom: .57vh;
+.grid-body {
+    position: relative;
+    display: flex;
 }
 
-
-tr:not(.dotted-line) td {
-    border-bottom: .1vw dashed rgb(221, 221, 221) !important;
+.grid-time-labels {
+    flex: 0 0 70px;
+    position: relative;
 }
 
-/* Resetting border for td elements in the top row */
-tr.dotted-line td {
-    border-top: none;
+.grid-time-label {
+    position: absolute;
+    right: 8px;
+    transform: translateY(-50%);
+    font-size: .75rem;
+    color: #333;
+    white-space: nowrap;
 }
 
+.grid-days {
+    flex: 1;
+    display: flex;
+    position: relative;
+}
 
+.grid-day-column {
+    flex: 1;
+    min-width: 100px;
+    position: relative;
+    border-left: 1px solid #ccc;
+}
 
+.grid-day-column:last-child {
+    border-right: 1px solid #ccc;
+}
+
+.grid-hour-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    border-bottom: 1px dashed #ddd;
+    box-sizing: border-box;
+}
+
+/* Course blocks + hover tooltip */
+
+.course-block {
+    cursor: pointer;
+}
+
+.course-tooltip {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 0;
+    min-width: 190px;
+    max-width: 240px;
+    background: #1f2937;
+    color: #fff;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 1.5;
+    white-space: normal;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+    z-index: 50;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.12s ease;
+    pointer-events: none;
+}
+
+.course-tooltip-title {
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.course-tooltip-meetings {
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.course-block:hover .course-tooltip {
+    visibility: visible;
+    opacity: 1;
+}

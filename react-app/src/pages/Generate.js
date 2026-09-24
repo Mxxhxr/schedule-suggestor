@@ -16,6 +16,35 @@ const convertTimePrefs = (days) => {
   return prefs;
 };
 
+// Single source of truth for the grid's measurements. Both the background
+// lines and the course blocks are positioned using these same numbers, so
+// nothing can drift out of alignment the way it did with the old vw/vh table.
+const HOUR_HEIGHT = 60; // px per hour row
+const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const TIME_SLOTS = ['7:00 AM', '8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM', '8:00 PM', '9:00 PM'];
+const BASE_START_MINUTES = 7 * 60; // 7:00 AM
+
+// Soft, "white mixed in" palette — one color per course, assigned
+// deterministically so the same course always gets the same color.
+const COURSE_COLORS = [
+  { bg: '#AEDBFF', text: '#1a3a5c' }, // soft blue
+  { bg: '#FFDAB3', text: '#7a4400' }, // soft peach
+  { bg: '#C9F2C7', text: '#1f5c1f' }, // soft green
+  { bg: '#F3C6F3', text: '#5c1f5c' }, // soft pink
+  { bg: '#FFF3B0', text: '#5c4b00' }, // soft yellow
+  { bg: '#D3C6FF', text: '#33206e' }, // soft lavender
+  { bg: '#FFC9C9', text: '#6e1f1f' }, // soft red
+  { bg: '#C6F0F0', text: '#1f5c5c' }, // soft teal
+];
+
+const getCourseColor = (courseCode) => {
+  let hash = 0;
+  for (let i = 0; i < courseCode.length; i++) {
+    hash = (hash * 31 + courseCode.charCodeAt(i)) >>> 0;
+  }
+  return COURSE_COLORS[hash % COURSE_COLORS.length];
+};
+
 
 const TimeTable = () => {
   const [schedules, setSchedules] = useState([]);
@@ -24,16 +53,16 @@ const TimeTable = () => {
   useEffect(() => {
     const savedCourses = Cookies.get('Courses');
     const savedDays = Cookies.get('userDays');
-  
+
     if (!savedCourses || !savedDays) {
       console.warn("No saved data in cookies.");
       return;
     }
-  
+
     const parsedCourses = JSON.parse(savedCourses).map(c => c.Course);
     const parsedDays = JSON.parse(savedDays);
     const formattedPrefs = convertTimePrefs(parsedDays);
-  
+
     axios.post('http://localhost:5000/generate', {
       selectedCourses: parsedCourses,
       timePreferences: formattedPrefs
@@ -47,50 +76,39 @@ const TimeTable = () => {
       console.error('Error fetching schedule:', err);
     });
   }, []);
-  
 
 
-  const timeSlots = ['7:00 AM', '8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM', '8:00 PM', '9:00 PM'];
+  const toMinutes = (timeStr) => {
+    const [time, modifier] = timeStr.split(" ");
+    let [hours, minutes] = time.split(":").map(Number);
+    if (modifier === "PM" && hours !== 12) hours += 12;
+    if (modifier === "AM" && hours === 12) hours = 0;
+    return hours * 60 + minutes;
+  };
 
+  const dayMap = DAYS.reduce((acc, day, i) => {
+    acc[day] = i;
+    return acc;
+  }, {});
 
   const renderCourseBlocks = () => {
     if (!selectedSchedule) return null;
 
-    const dayMap = {
-      Monday: 0,
-      Tuesday: 1,
-      Wednesday: 2,
-      Thursday: 3,
-      Friday: 4,
-      Saturday: 5,
-    };
-
-    const toMinutes = (timeStr) => {
-      const [time, modifier] = timeStr.split(" ");
-      let [hours, minutes] = time.split(":").map(Number);
-      if (modifier === "PM" && hours !== 12) hours += 12;
-      if (modifier === "AM" && hours === 12) hours = 0;
-      return hours * 60 + minutes;
-    };
-
-    const baseStart = 7 * 60; // 7:00 AM
-    const hourHeight = 60; // 60px per hour – adjust if your CSS grid is different
-
     const blocks = [];
 
     Object.entries(selectedSchedule).forEach(([course, section]) => {
-      // A section can meet on multiple days (e.g. MWF, TuTh) — render one
-      // block per meeting instead of assuming a single flat start/end/day.
       const meetings = section.meetings || [];
 
       meetings.forEach((m, meetingIndex) => {
         const startMin = toMinutes(m.start);
         const endMin = toMinutes(m.end);
-        const topOffset = ((startMin - baseStart) / 60) * hourHeight;
-        const height = ((endMin - startMin) / 60) * hourHeight;
+        const topOffset = ((startMin - BASE_START_MINUTES) / 60) * HOUR_HEIGHT;
+        const height = ((endMin - startMin) / 60) * HOUR_HEIGHT;
         const dayIndex = dayMap[m.day];
 
-        if (dayIndex === undefined) return; // skip anything with an unrecognized day
+        if (dayIndex === undefined) return;
+
+        const color = getCourseColor(course);
 
         blocks.push(
           <div
@@ -99,11 +117,11 @@ const TimeTable = () => {
             style={{
               position: 'absolute',
               top: `${topOffset}px`,
-              left: `${dayIndex * 100}px`, // assuming 100px per day column
+              left: `${(dayIndex / DAYS.length) * 100}%`,
+              width: `${(1 / DAYS.length) * 100}%`,
               height: `${height}px`,
-              width: '100px',
-              backgroundColor: '#4287f5',
-              color: 'white',
+              backgroundColor: color.bg,
+              color: color.text,
               padding: '4px',
               borderRadius: '4px',
               boxSizing: 'border-box',
@@ -113,6 +131,15 @@ const TimeTable = () => {
             {course} - {section.section}
             <br />
             {m.start}–{m.end}
+
+            <div className="course-tooltip">
+              <div className="course-tooltip-title">{section.title || course}</div>
+              <div>{course} &middot; Section {section.section}</div>
+              <div>{section.mode} &middot; {section.credits} credits</div>
+              <div className="course-tooltip-meetings">
+                {m.day} {m.start}–{m.end}
+              </div>
+            </div>
           </div>
         );
       });
@@ -121,61 +148,47 @@ const TimeTable = () => {
     return blocks;
   };
 
-
   return (
     <div className="schedule-container">
-      <div className="time-column">
-        {timeSlots.map((time, index) => (
-          <div key={index} className="time-label">
-            {time}
-          </div>
-        ))}
-      </div>
-      <div className="schedule-grid" style={{ position: "relative" }}>
-        <table>
-          <thead>
-            <tr>
-              <th>Monday</th>
-              <th>Tuesday</th>
-              <th>Wednesday</th>
-              <th>Thursday</th>
-              <th>Friday</th>
-              <th>Saturday</th>
-            </tr>
-          </thead>
-          <tbody>
-            {timeSlots.map((time, index) => (
-              <React.Fragment key={index}>
-                <tr className={`sv-grid-row ${index % 2 === 0 ? "even" : "odd"}`} data-time={time}>
-                  {Array.from({ length: 6 }).map((_, dayIndex) => (
-                    <td
-                      key={dayIndex}
-                      className={`sv-grid-col sv-grid-cell sv-day-${dayIndex + 2} ${
-                        dayIndex === 0 ? "sv-first-col" : ""
-                      }`}
-                    ></td>
-                  ))}
-                </tr>
-                {index !== timeSlots.length - 1 && (
-                  <tr className={`sv-grid-row dotted-line`} key={`dotted-line-${index}`}>
-                    {Array.from({ length: 6 }).map((_, dayIndex) => (
-                      <td key={dayIndex} colSpan="1" className={`sv-grid-col dotted-line`}></td>
-                    ))}
-                  </tr>
-                )}
-              </React.Fragment>
+      <div className="schedule-grid">
+        <div className="grid-header-row">
+          <div className="grid-corner" />
+          {DAYS.map(day => (
+            <div key={day} className="grid-day-header">{day}</div>
+          ))}
+        </div>
+
+        <div className="grid-body">
+          <div className="grid-time-labels" style={{ height: `${TIME_SLOTS.length * HOUR_HEIGHT}px` }}>
+            {TIME_SLOTS.map((time, i) => (
+              <div
+                key={time}
+                className="grid-time-label"
+                style={{ top: `${i * HOUR_HEIGHT}px` }}
+              >
+                {time}
+              </div>
             ))}
-            {/* Last dotted line row */}
-            <tr className={`sv-grid-row dotted-line`} key={`dotted-line-${timeSlots.length - 1}`}>
-              {Array.from({ length: 6 }).map((_, dayIndex) => (
-                <td key={dayIndex} colSpan="1" className={`sv-grid-col dotted-line`}></td>
-              ))}
-            </tr>
-          </tbody>
-        </table>
-  
-        {/* Render course blocks over the table */}
-        {renderCourseBlocks()}
+          </div>
+
+          <div className="grid-days" style={{ height: `${TIME_SLOTS.length * HOUR_HEIGHT}px` }}>
+            {DAYS.map(day => (
+              <div key={day} className="grid-day-column">
+                {TIME_SLOTS.map((_, i) => (
+                  <div
+                    key={i}
+                    className="grid-hour-line"
+                    style={{ top: `${i * HOUR_HEIGHT}px`, height: `${HOUR_HEIGHT}px` }}
+                  />
+                ))}
+              </div>
+            ))}
+
+            {/* Course blocks share this exact coordinate space, so their
+                top/left math lines up with the background lines above. */}
+            {renderCourseBlocks()}
+          </div>
+        </div>
       </div>
     </div>
   );
