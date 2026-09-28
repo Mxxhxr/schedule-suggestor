@@ -118,3 +118,26 @@
     visibility: visible;
     opacity: 1;
 }
+
+/* Status message (no input / no possible schedule / error) */
+
+.schedule-status-message {
+    margin: 60px auto;
+    max-width: 420px;
+    text-align: center;
+    padding: 24px;
+}
+
+.schedule-status-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.schedule-status-body {
+    font-size: .9rem;
+    font-weight: 400;
+    color: #666;
+    line-height: 1.5;
+}

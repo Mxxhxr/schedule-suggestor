@@ -49,6 +49,8 @@ const getCourseColor = (courseCode) => {
 const TimeTable = () => {
   const [schedules, setSchedules] = useState([]);
   const [selectedSchedule, setSelectedSchedule] = useState(null);
+  // 'loading' | 'no-input' | 'empty' | 'error' | 'success'
+  const [status, setStatus] = useState('loading');
 
   useEffect(() => {
     const savedCourses = Cookies.get('Courses');
@@ -56,6 +58,7 @@ const TimeTable = () => {
 
     if (!savedCourses || !savedDays) {
       console.warn("No saved data in cookies.");
+      setStatus('no-input');
       return;
     }
 
@@ -71,9 +74,11 @@ const TimeTable = () => {
       const results = res.data.schedules;
       setSchedules(results);
       setSelectedSchedule(results[0]);
+      setStatus(results.length > 0 ? 'success' : 'empty');
     })
     .catch(err => {
       console.error('Error fetching schedule:', err);
+      setStatus('error');
     });
   }, []);
 
@@ -147,6 +152,51 @@ const TimeTable = () => {
 
     return blocks;
   };
+
+  const renderStatusMessage = () => {
+    const messages = {
+      'no-input': {
+        title: 'No courses or time preferences selected',
+        body: 'Head to the Courses and Time Preference pages to make your selections first.'
+      },
+      'empty': {
+        title: 'No possible schedule found',
+        body: 'None of your selected courses fit together within your chosen time preferences. Try widening your available days/times or removing a conflicting course.'
+      },
+      'error': {
+        title: 'Something went wrong',
+        body: 'We couldn\'t reach the server to generate a schedule. Please try again in a moment.'
+      }
+    };
+
+    const msg = messages[status];
+    if (!msg) return null;
+
+    return (
+      <div className="schedule-status-message">
+        <div className="schedule-status-title">{msg.title}</div>
+        <div className="schedule-status-body">{msg.body}</div>
+      </div>
+    );
+  };
+
+  if (status === 'loading') {
+    return (
+      <div className="schedule-container">
+        <div className="schedule-status-message">
+          <div className="schedule-status-title">Generating your schedule…</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (status !== 'success') {
+    return (
+      <div className="schedule-container">
+        {renderStatusMessage()}
+      </div>
+    );
+  }
 
   return (
     <div className="schedule-container">
