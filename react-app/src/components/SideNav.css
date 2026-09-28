@@ -50,3 +50,9 @@
   color: #012D6B;
   border: 1px solid #012D6B;
 }
+
+.schedule-nav-slot {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}

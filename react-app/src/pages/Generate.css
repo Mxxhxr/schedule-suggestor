@@ -1,21 +1,25 @@
+/* Layout: the schedule fills the white card exactly. Nothing here scrolls;
+   row heights come from percentages in Generate.js. */
+
 .schedule-container {
     display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
     font-family: Inter;
     font-weight: 600;
 }
 
-.time-column {
-    width: 0;
-}
-
 .schedule-grid {
     flex: 1;
-    overflow: auto;
-    position: relative;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 .grid-header-row {
     display: flex;
+    flex-shrink: 0;
 }
 
 .grid-corner {
@@ -32,7 +36,8 @@
 }
 
 .grid-body {
-    position: relative;
+    flex: 1;
+    min-height: 0;
     display: flex;
 }
 
@@ -79,6 +84,14 @@
 
 .course-block {
     cursor: pointer;
+}
+
+/* Clips the label text if a block is too short to show both lines; the
+   tooltip is a sibling of this, so it is never clipped. */
+.course-block-label {
+    height: 100%;
+    overflow: hidden;
+    line-height: 1.2;
 }
 
 .course-tooltip {
@@ -140,4 +153,40 @@
     font-weight: 400;
     color: #666;
     line-height: 1.5;
+}
+
+/* Schedule option navigator ("1 of 3"). Rendered into the sidebar slot
+   under the Generate button (see SideNav.js), so it stays compact. */
+
+.schedule-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.schedule-nav-count {
+    font-size: .85rem;
+    font-weight: 600;
+    color: #333;
+    min-width: 56px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.schedule-nav-button {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 50%;
+    background: #003366;
+    color: #fff;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+}
+
+.schedule-nav-button:disabled {
+    opacity: 0.3;
+    cursor: default;
 }

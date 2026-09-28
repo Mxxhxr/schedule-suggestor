@@ -30,6 +30,8 @@ export function SideNav() {
           Generate
         </MuiButton>
       </div>
+      {/* Empty slot; the Generate page renders its "1 of N" control here */}
+      <div id="schedule-nav-slot" className="schedule-nav-slot" />
     </div>
   );
 }

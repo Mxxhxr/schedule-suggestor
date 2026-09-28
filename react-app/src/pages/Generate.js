@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import './Generate.css';
@@ -16,13 +17,14 @@ const convertTimePrefs = (days) => {
   return prefs;
 };
 
-// Single source of truth for the grid's measurements. Both the background
-// lines and the course blocks are positioned using these same numbers, so
-// nothing can drift out of alignment the way it did with the old vw/vh table.
-const HOUR_HEIGHT = 60; // px per hour row
+// Grid measurements. Everything is expressed as a fraction of the grid's total
+// time range (7 AM -> 10 PM), never in pixels. That way the schedule always
+// fits its container, and the hour lines, time labels, and course blocks stay
+// aligned with each other at any window size.
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const TIME_SLOTS = ['7:00 AM', '8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM', '8:00 PM', '9:00 PM'];
 const BASE_START_MINUTES = 7 * 60; // 7:00 AM
+const TOTAL_MINUTES = TIME_SLOTS.length * 60;
 
 // Soft, "white mixed in" palette — one color per course, assigned
 // deterministically so the same course always gets the same color.
@@ -48,9 +50,19 @@ const getCourseColor = (courseCode) => {
 
 const TimeTable = () => {
   const [schedules, setSchedules] = useState([]);
-  const [selectedSchedule, setSelectedSchedule] = useState(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
   // 'loading' | 'no-input' | 'empty' | 'error' | 'success'
   const [status, setStatus] = useState('loading');
+  // Empty slot in the sidebar (under the Generate button) where the
+  // "1 of N" control is rendered.
+  const [navSlot, setNavSlot] = useState(null);
+
+  // The schedule currently being displayed, derived from the list + index
+  const selectedSchedule = schedules[currentIndex] || null;
+
+  useEffect(() => {
+    setNavSlot(document.getElementById('schedule-nav-slot'));
+  }, []);
 
   useEffect(() => {
     const savedCourses = Cookies.get('Courses');
@@ -73,7 +85,7 @@ const TimeTable = () => {
     .then(res => {
       const results = res.data.schedules;
       setSchedules(results);
-      setSelectedSchedule(results[0]);
+      setCurrentIndex(0);
       setStatus(results.length > 0 ? 'success' : 'empty');
     })
     .catch(err => {
@@ -107,8 +119,8 @@ const TimeTable = () => {
       meetings.forEach((m, meetingIndex) => {
         const startMin = toMinutes(m.start);
         const endMin = toMinutes(m.end);
-        const topOffset = ((startMin - BASE_START_MINUTES) / 60) * HOUR_HEIGHT;
-        const height = ((endMin - startMin) / 60) * HOUR_HEIGHT;
+        const topPct = ((startMin - BASE_START_MINUTES) / TOTAL_MINUTES) * 100;
+        const heightPct = ((endMin - startMin) / TOTAL_MINUTES) * 100;
         const dayIndex = dayMap[m.day];
 
         if (dayIndex === undefined) return;
@@ -121,21 +133,23 @@ const TimeTable = () => {
             className="course-block"
             style={{
               position: 'absolute',
-              top: `${topOffset}px`,
+              top: `${topPct}%`,
               left: `${(dayIndex / DAYS.length) * 100}%`,
               width: `${(1 / DAYS.length) * 100}%`,
-              height: `${height}px`,
+              height: `${heightPct}%`,
               backgroundColor: color.bg,
               color: color.text,
-              padding: '4px',
+              padding: '3px 4px',
               borderRadius: '4px',
               boxSizing: 'border-box',
               fontSize: '12px'
             }}
           >
-            {course} - {section.section}
-            <br />
-            {m.start}–{m.end}
+            <div className="course-block-label">
+              {course} - {section.section}
+              <br />
+              {m.start}–{m.end}
+            </div>
 
             <div className="course-tooltip">
               <div className="course-tooltip-title">{section.title || course}</div>
@@ -209,37 +223,66 @@ const TimeTable = () => {
         </div>
 
         <div className="grid-body">
-          <div className="grid-time-labels" style={{ height: `${TIME_SLOTS.length * HOUR_HEIGHT}px` }}>
+          <div className="grid-time-labels">
             {TIME_SLOTS.map((time, i) => (
               <div
                 key={time}
                 className="grid-time-label"
-                style={{ top: `${i * HOUR_HEIGHT}px` }}
+                style={{ top: `${(i / TIME_SLOTS.length) * 100}%` }}
               >
                 {time}
               </div>
             ))}
           </div>
 
-          <div className="grid-days" style={{ height: `${TIME_SLOTS.length * HOUR_HEIGHT}px` }}>
+          <div className="grid-days">
             {DAYS.map(day => (
               <div key={day} className="grid-day-column">
                 {TIME_SLOTS.map((_, i) => (
                   <div
                     key={i}
                     className="grid-hour-line"
-                    style={{ top: `${i * HOUR_HEIGHT}px`, height: `${HOUR_HEIGHT}px` }}
+                    style={{
+                      top: `${(i / TIME_SLOTS.length) * 100}%`,
+                      height: `${100 / TIME_SLOTS.length}%`
+                    }}
                   />
                 ))}
               </div>
             ))}
 
             {/* Course blocks share this exact coordinate space, so their
-                top/left math lines up with the background lines above. */}
+                top/height math lines up with the background lines above. */}
             {renderCourseBlocks()}
           </div>
         </div>
       </div>
+
+      {/* Rendered into the sidebar slot, under the Generate button */}
+      {navSlot && createPortal(
+        <div className="schedule-nav">
+          <button
+            className="schedule-nav-button"
+            onClick={() => setCurrentIndex(i => i - 1)}
+            disabled={currentIndex === 0}
+            aria-label="Previous schedule"
+          >
+            &#8592;
+          </button>
+          <span className="schedule-nav-count">
+            {currentIndex + 1} of {schedules.length}
+          </span>
+          <button
+            className="schedule-nav-button"
+            onClick={() => setCurrentIndex(i => i + 1)}
+            disabled={currentIndex === schedules.length - 1}
+            aria-label="Next schedule"
+          >
+            &#8594;
+          </button>
+        </div>,
+        navSlot
+      )}
     </div>
   );
 };
