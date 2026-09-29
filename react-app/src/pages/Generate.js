@@ -149,12 +149,19 @@ const TimeTable = () => {
               {course} - {section.section}
               <br />
               {m.start}–{m.end}
+              {section.instructor && (
+                <>
+                  <br />
+                  {section.instructor}
+                </>
+              )}
             </div>
 
             <div className="course-tooltip">
               <div className="course-tooltip-title">{section.title || course}</div>
               <div>{course} &middot; Section {section.section}</div>
               <div>{section.mode} &middot; {section.credits} credits</div>
+              {section.instructor && <div>{section.instructor}</div>}
               <div className="course-tooltip-meetings">
                 {m.day} {m.start}–{m.end}
               </div>
@@ -239,14 +246,19 @@ const TimeTable = () => {
             {DAYS.map(day => (
               <div key={day} className="grid-day-column">
                 {TIME_SLOTS.map((_, i) => (
-                  <div
-                    key={i}
-                    className="grid-hour-line"
-                    style={{
-                      top: `${(i / TIME_SLOTS.length) * 100}%`,
-                      height: `${100 / TIME_SLOTS.length}%`
-                    }}
-                  />
+                  <React.Fragment key={i}>
+                    <div
+                      className="grid-hour-line"
+                      style={{
+                        top: `${(i / TIME_SLOTS.length) * 100}%`,
+                        height: `${100 / TIME_SLOTS.length}%`
+                      }}
+                    />
+                    <div
+                      className="grid-half-hour-line"
+                      style={{ top: `${((i + 0.5) / TIME_SLOTS.length) * 100}%` }}
+                    />
+                  </React.Fragment>
                 ))}
               </div>
             ))}

@@ -80,6 +80,13 @@
     box-sizing: border-box;
 }
 
+.grid-half-hour-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    border-bottom: 1px dotted #eee;
+}
+
 /* Course blocks + hover tooltip */
 
 .course-block {
