@@ -6,7 +6,7 @@ export default function Home() {
 
   const Space = () => {
     return (
-      <h1 style={{ fontSize: "20px", fontFamily: "Arial" }}>&nbsp;&&nbsp;</h1>
+      <h1 style={{ fontSize: "20px", fontFamily: "Inter" }}>&nbsp;&&nbsp;</h1>
     );
   };
 
@@ -18,7 +18,7 @@ export default function Home() {
         onMouseLeave={() => setHoveredPerson(null)}
         style={{
           fontSize: "20px",
-          fontFamily: "Arial",
+          fontFamily: "Inter",
           cursor: "pointer",
           color: hoveredPerson === name ? "blue" : "black",
           textDecoration: hoveredPerson === name ? "underline" : "none",
@@ -48,16 +48,12 @@ export default function Home() {
     <div className="home">
       <Header text="Homepage" size="medium" />
       <div style={styles.homecontent}>
-        <h1 style={{ fontSize: "20px", fontFamily: "Arial" }}>Created By:</h1>
+        <h1 style={{ fontSize: "20px", fontFamily: "Inter" }}>Created By:</h1>
         <div style={styles.names}>
-          <NameShow name="Maahir V." />
-          <Space />
-          <NameShow name="Zaid A." />
-          <Space />
-          <NameShow name="Sandeep S." />
+          <NameShow name="Maahir Vohra" />
         </div>
         <br />
-        <h1 style={{ fontSize: "30px", fontFamily: "Arial", color: "#1da1f2" }}>
+        <h1 style={{ fontSize: "30px", fontFamily: "Inter", color: "#1da1f2" }}>
           Welcome to the NJIT Schedule Generator
         </h1>
         <h1
@@ -65,6 +61,7 @@ export default function Home() {
             fontSize: "20px",
             fontStyle: "italic",
             textDecoration: "underline",
+            fontFamily: "Inter",
           }}
         >
           What is this?
@@ -91,7 +88,7 @@ export default function Home() {
         </div>
         <br /> <br /> <br /> <br />
         <div style={styles.homecontent}>
-          <h1 style={{ fontSize: "30px", fontFamily: "Arial", margin: "0px" }}>
+          <h1 style={{ fontSize: "30px", fontFamily: "Inter", margin: "0px" }}>
             To start, select <span style={{ color: "red" }}>Courses</span> from
             the side bar!
           </h1>
@@ -121,12 +118,12 @@ const styles = {
     margin: "-10px",
   },
   whatthistext: {
-    fontFamily: "Times New Roman",
+    fontFamily: "Inter",
     margin: "2px",
   },
   notetext: {
     fontSize: "17px",
     fontWeight: "bold",
-    fontFamily: "Arial",
+    fontFamily: "Inter",
   },
 };
