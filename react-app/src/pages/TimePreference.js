@@ -133,7 +133,6 @@ const Days = () => {
           </div>
         ))}
       </div>
-      <p style={styles.bottomText}> Other Options:</p>
     </div>
   );
 };

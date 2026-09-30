@@ -51,8 +51,11 @@ const getCourseColor = (courseCode) => {
 const TimeTable = () => {
   const [schedules, setSchedules] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  // 'loading' | 'no-input' | 'empty' | 'error' | 'success'
+  // 'loading' | 'no-input' | 'empty' | 'unavailable' | 'error' | 'success'
   const [status, setStatus] = useState('loading');
+  // Course codes the backend found zero sections for (only set when
+  // status === 'unavailable')
+  const [unavailableCourses, setUnavailableCourses] = useState([]);
   // Empty slot in the sidebar (under the Generate button) where the
   // "1 of N" control is rendered.
   const [navSlot, setNavSlot] = useState(null);
@@ -84,9 +87,15 @@ const TimeTable = () => {
     })
     .then(res => {
       const results = res.data.schedules;
+      const unavailable = res.data.unavailable_courses || [];
       setSchedules(results);
       setCurrentIndex(0);
-      setStatus(results.length > 0 ? 'success' : 'empty');
+      setUnavailableCourses(unavailable);
+      if (unavailable.length > 0) {
+        setStatus('unavailable');
+      } else {
+        setStatus(results.length > 0 ? 'success' : 'empty');
+      }
     })
     .catch(err => {
       console.error('Error fetching schedule:', err);
@@ -183,6 +192,10 @@ const TimeTable = () => {
       'empty': {
         title: 'No possible schedule found',
         body: 'None of your selected courses fit together within your chosen time preferences. Try widening your available days/times or removing a conflicting course.'
+      },
+      'unavailable': {
+        title: 'One or more courses can\'t be scheduled',
+        body: `We couldn't find any schedulable sections for: ${unavailableCourses.join(', ')}. This usually means the course is fully online/asynchronous with no fixed meeting time, or the course code isn't in our data. Try removing it from your course list.`
       },
       'error': {
         title: 'Something went wrong',
