@@ -193,12 +193,12 @@ export default function Courses() {
       <div style={{ borderBottom: "1px solid #ddd" }}></div>
 
       {selectedCourses.length === 0 ? (
-        <p style={{ fontSize: "13px", fontWeight: "bold", marginTop: "2vh" }}>
+        <p style={{ fontSize: "13px", fontFamily: "Inter", fontWeight: "bold", marginTop: "2vh" }}>
           Please Select Some Courses...
         </p>
       ) : (
         <div>
-          <p>Selected Courses</p>
+          <p style={styles.selectedCoursesLabel}>Selected Courses</p>
           <div style={styles.courseHeading}>
             <div style={styles.courses}>
               <p>Course</p>
@@ -222,6 +222,12 @@ export default function Courses() {
 }
 
 const styles = {
+  selectedCoursesLabel: {
+    fontFamily: "Inter",
+    fontSize: "13px",
+    fontWeight: "bold",
+    marginTop: "2vh",
+  },
   semesterDropdown: {
     padding: "8px",
     fontSize: "12px",
@@ -250,6 +256,7 @@ const styles = {
   classInputSearchButton: {
     padding: "8px",
     fontSize: "12px",
+    fontFamily: "Inter",
     borderRadius: "4px",
     backgroundColor: "#F08080",
     color: "black",
@@ -272,6 +279,7 @@ const styles = {
   courseCountInfoText: {
     marginRight: "60px",
     fontSize: "13px",
+    fontFamily: "Inter",
   },
   inputContent: {
     display: "flex",
